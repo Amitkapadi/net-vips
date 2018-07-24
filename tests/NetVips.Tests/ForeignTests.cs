@@ -200,6 +200,30 @@ namespace NetVips.Tests
             }
         }
 
+        [Fact]
+        public void TestDelete()
+        {
+            // Disable operations cache
+            Operation.VipsCacheSetMax(0);
+
+            const string filename = "lichtenstein";
+            const string extension = "jpg";
+
+            using (var thumb = Image.Thumbnail(Path.Combine(Helper.Images, $"{filename}.{extension}"), 250))
+            {
+                thumb.WriteToFile(Path.Combine(Helper.Images, $"{filename}.thumbnail.{extension}"));
+            }
+
+            // System.GC.Collect();
+            // System.GC.WaitForPendingFinalizers();
+
+            var ex = Record.Exception(() => File.Delete(Path.Combine(Helper.Images, $"{filename}.{extension}")));
+            Assert.Null(ex);
+
+            // Enable operations cache
+            Operation.VipsCacheSetMax(1000);
+        }
+
         [SkippableFact]
         public void TestPng()
         {
