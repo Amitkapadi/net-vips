@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace NetVips.Tests
@@ -214,8 +215,11 @@ namespace NetVips.Tests
                 thumb.WriteToFile(Path.Combine(Helper.Images, $"{filename}.thumbnail.{extension}"));
             }
 
-            // System.GC.Collect();
-            // System.GC.WaitForPendingFinalizers();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
 
             var ex = Record.Exception(() => File.Delete(Path.Combine(Helper.Images, $"{filename}.{extension}")));
             Assert.Null(ex);
