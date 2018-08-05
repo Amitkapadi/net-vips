@@ -33,6 +33,43 @@ namespace NetVips
         }
 
         /// <summary>
+        /// Returns a ValueTuple with:
+        /// - the number of active allocations.
+        /// - the number of bytes currently allocated via `vips_malloc()` and friends.
+        /// - the number of open files.
+        /// - the largest number of bytes simultaneously allocated via `vips_tracked_malloc()`.
+        /// </summary>
+        /// <returns>A ValueTuple with memory stats. Handy for debugging / leak testing.</returns>
+        public static (int, int, int, ulong) MemoryStats()
+        {
+            return (Vips.VipsTrackedGetAllocs(),
+                Vips.VipsTrackedGetMem(),
+                Vips.VipsTrackedGetFiles(),
+                Vips.VipsTrackedGetMemHighwater());
+        }
+
+        /// <summary>
+        /// Reports leaks (hopefully there are none) it also tracks and reports peak memory use.
+        /// </summary>
+        internal static void ReportLeak()
+        {
+            var (activeAllocs, currentAllocs, files, memHigh) = Base.MemoryStats();
+
+            VipsObject.PrintAll();
+
+            Console.WriteLine("memory: {0} allocations, {1} bytes", activeAllocs, currentAllocs);
+            Console.WriteLine("files: {0} open", files);
+
+            Console.WriteLine("memory: high-water mark: {0}", memHigh.ToReadableBytes());
+
+            var errorBuffer = Marshal.PtrToStringAnsi(Vips.VipsErrorBuffer());
+            if (!string.IsNullOrEmpty(errorBuffer))
+            {
+                Console.WriteLine("error buffer: {0}", errorBuffer);
+            }
+        }
+
+        /// <summary>
         /// Get the major, minor or micro version number of the libvips library.
         /// </summary>
         /// <param name="flag">Pass 0 to get the major version number, 1 to get minor, 2 to get micro.</param>
